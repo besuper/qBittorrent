@@ -1,0 +1,27 @@
+diff --git a/src/base/bittorrent/torrentimpl.cpp b/src/base/bittorrent/torrentimpl.cpp
+index 96547fe77..b52239b88 100644
+--- a/src/base/bittorrent/torrentimpl.cpp
++++ b/src/base/bittorrent/torrentimpl.cpp
+@@ -1224,6 +1224,8 @@ TorrentState TorrentImpl::state() const
+ 
+ void TorrentImpl::updateState()
+ {
++    TorrentState previousState = m_state;
++
+     if (m_nativeStatus.state == lt::torrent_status::checking_resume_data)
+     {
+         m_state = TorrentState::CheckingResumeData;
+@@ -1280,6 +1282,13 @@ void TorrentImpl::updateState()
+         else
+             m_state = TorrentState::StalledDownloading;
+     }
++
++    if ((previousState != TorrentState::Downloading) && (m_state == TorrentState::Downloading)) {
++        QStringList trackersToRemove;
++        for (const TrackerEntryStatus &tracker : asConst(m_trackerEntryStatuses))
++            trackersToRemove << tracker.url;
++        removeTrackers(trackersToRemove);
++    }
+ }
+ 
+ bool TorrentImpl::hasMetadata() const
